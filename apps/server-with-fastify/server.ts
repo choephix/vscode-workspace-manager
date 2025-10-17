@@ -2,6 +2,7 @@ const fastifyStatic = require('@fastify/static') as typeof import('@fastify/stat
 const Fastify = require('fastify') as typeof import('fastify');
 const path = require('path') as typeof import('path');
 const fs = require('fs') as typeof import('fs');
+const os = require('os') as typeof import('os');
 
 const { parseCommandLineArgs, displayCommandLineHelp } = require('./lib/cmd-args') as typeof import('./lib/cmd-args');
 
@@ -25,6 +26,13 @@ function log(...args: any[]) {
   }
 }
 
+function expandTilde(filePath: string): string {
+  if (filePath.startsWith('~/')) {
+    return path.join(os.homedir(), filePath.slice(2));
+  }
+  return filePath;
+}
+
 const workspacePathsRaw = cmdArgs.workspacePaths ||
   (process.env.CODELAUNCHER_WORKSPACE_PATH ?
     process.env.CODELAUNCHER_WORKSPACE_PATH.split(',').map(p => p.trim()).filter(p => p.length > 0) :
@@ -41,7 +49,7 @@ if (!workspacePathsRaw || workspacePathsRaw.length === 0) {
 log('//// Port:', port);
 log('//// Workspace Paths:', workspacePathsRaw);
 
-const workspacePaths = workspacePathsRaw.map(p => path.resolve(p));
+const workspacePaths = workspacePathsRaw.map(p => path.resolve(expandTilde(p)));
 log('//// Workspace Paths (resolved):', workspacePaths);
 
 const fastify = Fastify({

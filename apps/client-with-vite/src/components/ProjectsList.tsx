@@ -20,6 +20,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useOpenEditorAt } from '@/lib/hooks/useOpenEditorAt';
 import { actions, useStore } from '@/lib/store';
 import { ProjectsListTabType, useSelectedProjectsListTab } from '@/lib/hooks/useSelectedProjectsTab';
+import { WorkspaceData } from '@code-launcher/data-types';
 
 const showDirectoryLastModified = false;
 const showDirectoryGitRepoIcon = false;
@@ -28,8 +29,12 @@ const showRepoCommitMessage = false;
 const showRepoDatetime = false;
 const showRepoBranch = true;
 
-const ProjectsList: React.FC = () => {
-  const { workspaceInfo, uiState, configuration } = useStore();
+interface ProjectsListProps {
+  workspace: WorkspaceData;
+}
+
+const ProjectsList: React.FC<ProjectsListProps> = ({ workspace }) => {
+  const { uiState } = useStore();
   const openEditorAt = useOpenEditorAt();
 
   const [activeTab, setActiveTab] = useSelectedProjectsListTab();
@@ -50,16 +55,16 @@ const ProjectsList: React.FC = () => {
     };
   }, []);
 
-  if (!configuration) return null;
+  if (!workspace.configuration) return null;
 
   const onProjectClick = (project: string) => {
-    openEditorAt(project);
+    openEditorAt(project, workspace.path);
   };
 
   const renderItemPrefix = (item: any) => {
     switch (activeTab) {
       case 'directories':
-        switch (configuration?.ui?.projectDirectoriesPrefix) {
+        switch (workspace.configuration?.ui?.projectDirectoriesPrefix) {
           case 'folderIcon':
             return <FolderIcon size={12} className="mr-2 text-gray-500" />;
           case 'backslash':
@@ -200,12 +205,12 @@ const ProjectsList: React.FC = () => {
   };
 
   const renderTabContent = () => {
-    if (!workspaceInfo) return null;
+    if (!workspace.workspaceInfo) return null;
 
     const itemsMap = {
-      directories: workspaceInfo.rootDirectories,
-      gitRepos: workspaceInfo.gitRepositories,
-      codeWorkspaces: workspaceInfo.vscodeWorkspaceFiles,
+      directories: workspace.workspaceInfo.rootDirectories,
+      gitRepos: workspace.workspaceInfo.gitRepositories,
+      codeWorkspaces: workspace.workspaceInfo.vscodeWorkspaceFiles,
     } satisfies Record<ProjectsListTabType, readonly any[]>;
 
     const items = itemsMap[activeTab];
@@ -261,7 +266,7 @@ const ProjectsList: React.FC = () => {
     <div className="w-full">
       <div className="flex justify-between items-center py-2 px-2 border-b border-gray-700">
         <div className="text-sm text-gray-400 flex items-center">
-          Existing project&nbsp;
+          {workspace.path}&nbsp;
           <div className="relative group" ref={dropdownRef}>
             <button
               onClick={toggleDropdown}
@@ -300,7 +305,7 @@ const ProjectsList: React.FC = () => {
         </button>
       </div>
 
-      {workspaceInfo === null ? (
+      {workspace.workspaceInfo === null ? (
         <div className="flex items-center justify-center py-4 border-b border-gray-700">
           <div className="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
           <span className="text-xs text-gray-400">Loading...</span>

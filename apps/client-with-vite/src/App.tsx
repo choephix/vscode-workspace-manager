@@ -16,7 +16,9 @@ const hideTemplatesAtProjectCount = 12;
 export default function Home() {
   useEffect(() => {
     actions.refreshProjects().then(() => {
-      const projectDirsCount = store.workspaceInfo?.rootDirectories.length ?? 0;
+      const projectDirsCount = store.workspaces.reduce((total, workspace) => 
+        total + (workspace.workspaceInfo?.rootDirectories.length ?? 0), 0
+      );
       store.uiState.showTemplates = projectDirsCount < hideTemplatesAtProjectCount;
     });
   }, []);
@@ -41,7 +43,11 @@ export default function Home() {
           </div>
 
           <div className="mb-10">
-            <ProjectsList />
+            {store.workspaces.map((workspace) => (
+              <div key={workspace.path} className="mb-8">
+                <ProjectsList workspace={workspace} />
+              </div>
+            ))}
           </div>
         </div>
 
