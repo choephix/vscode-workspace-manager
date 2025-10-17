@@ -14,11 +14,12 @@ export interface WorkspaceConfiguration {
   }[];
 }
 
-export interface CodeLauncherServerActionResult {
-  pathToWorkspaces: string;
-  configuration?: WorkspaceConfiguration;
-  workspaceInfo?: {
+export interface WorkspaceData {
+  path: string;
+  configuration: WorkspaceConfiguration;
+  workspaceInfo: {
     rootDirectories: {
+      workspacePath: string;
       dirName: string;
       relativePath: string;
       absolutePath: string;
@@ -26,10 +27,12 @@ export interface CodeLauncherServerActionResult {
       isGitRepo: boolean;
     }[];
     vscodeWorkspaceFiles: {
+      workspacePath: string;
       relativePath: string;
       absolutePath: string;
     }[];
     gitRepositories: {
+      workspacePath: string;
       relativePath: string;
       absolutePath: string;
       originDomain: string | null;
@@ -46,6 +49,10 @@ export interface CodeLauncherServerActionResult {
       } | null;
     }[];
   };
+}
+
+export interface CodeLauncherServerActionResult {
+  workspaces: WorkspaceData[];
   stats?: {
     cpuUsage: number | null;
     memUsage: number | null;

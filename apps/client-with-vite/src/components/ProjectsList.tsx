@@ -59,7 +59,7 @@ const ProjectsList: React.FC = () => {
   const renderItemPrefix = (item: any) => {
     switch (activeTab) {
       case 'directories':
-        switch (configuration.ui.projectDirectoriesPrefix) {
+        switch (configuration?.ui?.projectDirectoriesPrefix) {
           case 'folderIcon':
             return <FolderIcon size={12} className="mr-2 text-gray-500" />;
           case 'backslash':

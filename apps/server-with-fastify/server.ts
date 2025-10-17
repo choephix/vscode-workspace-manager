@@ -25,21 +25,24 @@ function log(...args: any[]) {
   }
 }
 
-const workspacePathRaw = cmdArgs.workspacePath || process.env.CODELAUNCHER_WORKSPACE_PATH || '..';
+const workspacePathsRaw = cmdArgs.workspacePaths ||
+  (process.env.CODELAUNCHER_WORKSPACE_PATH ?
+    process.env.CODELAUNCHER_WORKSPACE_PATH.split(',').map(p => p.trim()).filter(p => p.length > 0) :
+    ['..']);
 const port = +(cmdArgs.port || process.env.CODELAUNCHER_PORT || 19001);
 
-if (!workspacePathRaw) {
+if (!workspacePathsRaw || workspacePathsRaw.length === 0) {
   console.error(
-    'Workspace path not given. Please provide a --workspace argument or set the CODELAUNCHER_WORKSPACE_PATH environment variable.'
+    'Workspace paths not given. Please provide a --workspace argument or set the CODELAUNCHER_WORKSPACE_PATH environment variable.'
   );
   throw process.exit(1);
 }
 
 log('//// Port:', port);
-log('//// Workspace Path:', workspacePathRaw);
+log('//// Workspace Paths:', workspacePathsRaw);
 
-const workspacePath = path.resolve(workspacePathRaw);
-log('//// Workspace Path (resolved):', workspacePath);
+const workspacePaths = workspacePathsRaw.map(p => path.resolve(p));
+log('//// Workspace Paths (resolved):', workspacePaths);
 
 const fastify = Fastify({
   logger: verbose,
@@ -66,8 +69,8 @@ fastify.register(
     } = //
       await import('@code-launcher/shell-operations');
 
-    const stateActions = createCodeLauncherServerActions(workspacePath);
-    const extraActions = createCodeLauncherServerExtraActions(workspacePath);
+    const stateActions = createCodeLauncherServerActions(workspacePaths);
+    const extraActions = createCodeLauncherServerExtraActions(workspacePaths);
 
     //// Get Project Directories List
     fastify.get('/ls', async (request: RequestWithIgnoreCache) => {

@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { CodeLauncherServerActionResult } from '@code-launcher/data-types';
+import { CodeLauncherServerActionResult, WorkspaceData } from '@code-launcher/data-types';
 import {
   getGitRepoDirectories as getGitRepositories,
   getProjectDirectoriesList,
@@ -12,30 +12,46 @@ import { runCommand } from './lib/shell';
 import { getMemoryAndCPU, getSystemInfo } from './lib/system';
 import { createCachedFunction } from './utils/caching';
 
-export function createCodeLauncherServerActions(pathToWorkspaces: string) {
-  pathToWorkspaces = path.resolve(pathToWorkspaces);
+async function getWorkspaceData(workspacePath: string): Promise<WorkspaceData> {
+  const resolvedPath = path.resolve(workspacePath);
+
+  const [configuration, rootDirectories, vscodeWorkspaceFiles, gitRepositories] = await Promise.all([
+    getWorkspaceConfiguration(resolvedPath),
+    getProjectDirectoriesList(resolvedPath).catch(() => []),
+    getVSCodeWorkspaceFiles(resolvedPath).catch(() => []),
+    getGitRepositories(resolvedPath).catch(() => []),
+  ]);
+
+  // Add workspace path identification to each item
+  const workspaceInfo = {
+    rootDirectories: rootDirectories.map(dir => ({ ...dir, workspacePath: resolvedPath })),
+    vscodeWorkspaceFiles: vscodeWorkspaceFiles.map(file => ({ ...file, workspacePath: resolvedPath })),
+    gitRepositories: gitRepositories.map(repo => ({ ...repo, workspacePath: resolvedPath })),
+  };
+
+  return {
+    path: resolvedPath,
+    configuration,
+    workspaceInfo,
+  };
+}
+
+export function createCodeLauncherServerActions(pathsToWorkspaces: string[]) {
+  const resolvedPaths = pathsToWorkspaces.map(p => path.resolve(p));
 
   async function getTheStuff() {
     // console.log('🔍 Fetching workspace data...');
     const { cpuUsage, memUsage } = getMemoryAndCPU();
     const systemInfo = getSystemInfo();
 
-    const [configuration, rootDirectories, vscodeWorkspaceFiles, gitRepositories] = await Promise.all([
-      getWorkspaceConfiguration(pathToWorkspaces),
-      getProjectDirectoriesList(pathToWorkspaces).catch(() => []),
-      getVSCodeWorkspaceFiles(pathToWorkspaces).catch(() => []),
-      getGitRepositories(pathToWorkspaces).catch(() => []),
-    ]);
+    // Fetch data for all workspaces in parallel
+    const workspaces = await Promise.all(
+      resolvedPaths.map(workspacePath => getWorkspaceData(workspacePath))
+    );
 
     // console.log('✅ Workspace data fetched successfully');
     return {
-      pathToWorkspaces,
-      configuration,
-      workspaceInfo: {
-        rootDirectories: rootDirectories,
-        vscodeWorkspaceFiles: vscodeWorkspaceFiles,
-        gitRepositories: gitRepositories,
-      },
+      workspaces,
       stats: { cpuUsage, memUsage },
       systemInfo,
       exitCode: null,
@@ -68,8 +84,10 @@ export function createCodeLauncherServerActions(pathToWorkspaces: string) {
   } satisfies Record<string, (...args: any[]) => Promise<CodeLauncherServerActionResult>>;
 }
 
-export function createCodeLauncherServerExtraActions(pathToWorkspaces: string) {
-  pathToWorkspaces = path.resolve(pathToWorkspaces);
+export function createCodeLauncherServerExtraActions(pathsToWorkspaces: string[]) {
+  const resolvedPaths = pathsToWorkspaces.map(p => path.resolve(p));
+  // Use the first workspace as the default for commands
+  const defaultWorkspacePath = resolvedPaths[0];
 
   const cachedFindOpenPorts = createCachedFunction('scanOpenPorts', scanOpenPorts);
   cachedFindOpenPorts.forceUpdate();
@@ -91,10 +109,11 @@ export function createCodeLauncherServerExtraActions(pathToWorkspaces: string) {
       return result;
     },
 
-    runCommand: async (command: string) => {
-      console.log(`🚀 Running command: ${command}`);
+    runCommand: async (command: string, workspacePath?: string) => {
+      const cwd = workspacePath ? path.resolve(workspacePath) : defaultWorkspacePath;
+      console.log(`🚀 Running command: ${command} in ${cwd}`);
       const { output, exitCode } = await runCommand(command, {
-        cwd: pathToWorkspaces,
+        cwd,
       });
 
       return {

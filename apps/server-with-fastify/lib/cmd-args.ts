@@ -1,5 +1,5 @@
 export interface CommandLineArgs {
-  workspacePath?: string;
+  workspacePaths?: string[];
   port?: number;
   expose?: boolean;
   help?: boolean;
@@ -12,7 +12,9 @@ export function parseCommandLineArgs(): CommandLineArgs {
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '-w' || args[i] === '--workspace') {
-      result.workspacePath = args[i + 1];
+      const workspaceArg = args[i + 1];
+      // Split by comma and trim whitespace from each path
+      result.workspacePaths = workspaceArg.split(',').map(path => path.trim()).filter(path => path.length > 0);
       i++;
     } else if (args[i] === '-p' || args[i] === '--port') {
       result.port = parseInt(args[i + 1], 10);
@@ -34,14 +36,15 @@ export function displayCommandLineHelp() {
 Usage: node server.js [options]
 
 Options:
-  -w, --workspace <path>  Set the workspace path
+  -w, --workspace <paths> Set the workspace paths (comma-separated for multiple)
+                          Example: --workspace ~/workspace,~/noodlespace,~/hobbyprojects
   -p, --port <number>     Set the port number (default: 19001)
   -x, --expose            Make the server externally accessible
   -v, --verbose           Enable verbose logging
   -h, --help              Display this help message
 
 Environment variables:
-  CODELAUNCHER_WORKSPACE_PATH  Set the workspace path
+  CODELAUNCHER_WORKSPACE_PATH  Set the workspace paths (comma-separated for multiple)
   CODELAUNCHER_PORT            Set the port number
 `);
 }

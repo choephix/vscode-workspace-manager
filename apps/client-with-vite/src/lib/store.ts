@@ -1,7 +1,7 @@
 import { proxy, useSnapshot } from 'valtio';
 import { apiService } from './apiService';
 
-import { CodeLauncherServerActionResult, WorkspaceConfiguration } from '@code-launcher/data-types';
+import { WorkspaceConfiguration, WorkspaceData } from '@code-launcher/data-types';
 import { SmartBarFeature } from './smartbar/SmartBarFeatures';
 
 interface State {
@@ -11,15 +11,16 @@ interface State {
   };
   activeSmartBarFeature: SmartBarFeature | null;
   //// Workspace State
-  pathToWorkspaces: string | null;
-  workspaceInfo: CodeLauncherServerActionResult['workspaceInfo'] | null;
+  workspaces: WorkspaceData[];
   lastCommandOutput: string | null;
   stats: {
     cpuUsage: number | null;
     memUsage: number | null;
   };
-  configuration: WorkspaceConfiguration;
   selectedEditorIndex: number;
+  configuration: WorkspaceConfiguration | null;
+  workspaceInfo: WorkspaceData['workspaceInfo'] | null;
+  pathToWorkspaces: string | null;
 }
 
 export const store = proxy<State>({
@@ -27,21 +28,16 @@ export const store = proxy<State>({
   uiState: { showTemplates: false },
   activeSmartBarFeature: null,
   ////
-  workspaceInfo: null,
-  pathToWorkspaces: null,
+  workspaces: [],
   lastCommandOutput: null,
   stats: {
     memUsage: 0,
     cpuUsage: 0,
   },
-  configuration: {
-    ui: {
-      projectDirectoriesPrefix: null,
-    },
-    editors: [],
-    templates: [],
-  },
   selectedEditorIndex: 0,
+  configuration: null,
+  workspaceInfo: null,
+  pathToWorkspaces: null,
 });
 
 export const actions = {

@@ -19,9 +19,17 @@ const createApiService = (baseUrl: string) => {
 
     if (data.commandOutput !== undefined) store.lastCommandOutput = data.commandOutput;
     if (data.stats !== undefined) store.stats = { ...store.stats, ...data.stats };
-    if (data.configuration !== undefined) store.configuration = data.configuration;
-    if (data.pathToWorkspaces !== undefined) store.pathToWorkspaces = data.pathToWorkspaces;
-    if (data.workspaceInfo !== undefined) store.workspaceInfo = data.workspaceInfo;
+    if (data.workspaces !== undefined) {
+      store.workspaces = data.workspaces;
+      
+      // Extract configuration and workspaceInfo from the first workspace
+      if (data.workspaces.length > 0) {
+        const firstWorkspace = data.workspaces[0];
+        store.configuration = firstWorkspace.configuration;
+        store.workspaceInfo = firstWorkspace.workspaceInfo;
+        store.pathToWorkspaces = firstWorkspace.path;
+      }
+    }
 
     return data;
   };
