@@ -52,8 +52,6 @@ if (pathsToServe.length > 0) {
   fastify.register(fastifyStatic, { root: pathsToServe, prefix: '/' });
 }
 
-// fastify.register(require('@fastify/websocket'));
-
 type RequestWithIgnoreCache = import('fastify').FastifyRequest<{ Querystring: { ignoreCache?: string } }>;
 type RequestWithCommand = import('fastify').FastifyRequest<{ Body: { command: string } }>;
 
