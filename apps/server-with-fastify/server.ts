@@ -52,6 +52,8 @@ if (pathsToServe.length > 0) {
   fastify.register(fastifyStatic, { root: pathsToServe, prefix: '/' });
 }
 
+// fastify.register(require('@fastify/websocket'));
+
 type RequestWithIgnoreCache = import('fastify').FastifyRequest<{ Querystring: { ignoreCache?: string } }>;
 type RequestWithCommand = import('fastify').FastifyRequest<{ Body: { command: string } }>;
 
@@ -97,15 +99,14 @@ fastify.register(
       ) => {
         const { port } = request.params;
         try {
-          const [b1, b2] = await Promise.all([fetchFaviconFromPaths(port), fetchFaviconFromHead(port)]);
-          const faviconBuffer = b1 || b2;
-          // if (faviconBuffer) {
-          reply.type('image/x-icon').send(faviconBuffer);
-          // } else {
-          //   throw new Error('Favicon not found');
-          // }
+          const [direct, fromHead] = await Promise.all([fetchFaviconFromPaths(port), fetchFaviconFromHead(port)]);
+          const favicon = direct || fromHead;
+          if (!favicon) {
+            reply.status(404).send('Favicon not found');
+            return;
+          }
+          reply.type(favicon.contentType).send(favicon.buffer);
         } catch (error) {
-          // console.error(`❌ Error fetching favicon for port ${port}:`, error);
           reply.status(404).send(':(\n\nFavicon not found\n\n' + error);
         }
       }

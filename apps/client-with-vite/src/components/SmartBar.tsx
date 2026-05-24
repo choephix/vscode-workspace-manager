@@ -7,6 +7,12 @@ import { useAnimatedPlaceholder } from '@/lib/hooks/useAnimatedPlaceholder';
 import { SmartBarFeatures } from '@/lib/smartbar/SmartBarFeatures';
 import { actions, useStore } from '@/lib/store';
 
+// Hoisted to module scope so the reference is stable across renders;
+// otherwise useAnimatedPlaceholder's effect would re-run on every keystroke.
+const SMARTBAR_PLACEHOLDERS = SmartBarFeatures.flatMap(feature =>
+  feature.disabled || !feature.placeholder ? [] : [feature.placeholder]
+);
+
 const SmartBar: React.FC = () => {
   const { isSomeActionRunning } = useStore();
 
@@ -33,7 +39,7 @@ const SmartBarInputBox: React.FC = () => {
   const [inputContent, setInputContent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useAnimatedPlaceholder(textareaRef, getAllSmartBarFeatureHints(), 'Enter ');
+  useAnimatedPlaceholder(textareaRef, SMARTBAR_PLACEHOLDERS, 'Enter ');
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -62,7 +68,11 @@ const SmartBarInputBox: React.FC = () => {
 
   const activeFeature = interpretSmartBarInput(inputContent);
   const { icon: Icon, action: performButtonAction, label: buttonLabel } = activeFeature;
-  actions.setActiveSmartBarFeature(activeFeature);
+
+  // Push the active feature into the store from an effect, not during render.
+  useEffect(() => {
+    actions.setActiveSmartBarFeature(activeFeature);
+  }, [activeFeature]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -163,12 +173,6 @@ const CommandOutput = () => {
       </div>
     </>
   );
-};
-
-const getAllSmartBarFeatureHints = () => {
-  const placeholders = SmartBarFeatures.map(feature => (feature.disabled ? null : feature.placeholder));
-  const nonEmptyPlaceholders = placeholders.filter(Boolean) as string[];
-  return nonEmptyPlaceholders;
 };
 
 const interpretSmartBarInput = (input: string | undefined) => {

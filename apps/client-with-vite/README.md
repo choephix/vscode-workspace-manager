@@ -1,50 +1,26 @@
-# React + TypeScript + Vite
+# `@code-launcher/client-with-vite`
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Vite + React SPA for the `code:launcher` UI.
 
-Currently, two official plugins are available:
+This is an internal workspace package. The full project README, including
+how to run and configure everything, lives at the repo root.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Local development
 
-## Expanding the ESLint configuration
+From the repo root:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+```bash
+pnpm install
+pnpm dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+The dev script runs both the Vite dev server (port `19002`) and the
+Fastify API server (port `19001`) in parallel; the Vite config proxies
+`/api` to the API server.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react';
+## Layout
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-});
-```
+- `src/App.tsx` — top-level page composition
+- `src/components/` — section components (SmartBar, ProjectsList, …)
+- `src/lib/store.ts` — valtio store
+- `src/lib/apiService.ts` — typed fetch wrapper around `/api/*`
