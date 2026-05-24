@@ -270,14 +270,16 @@ export async function getWorkspaceConfiguration(workspacePath: string): Promise<
     const configuration = YAML.parse(configFileContent);
     return configuration;
   } catch (error) {
-    console.error(`Error reading workspace configuration: ${error}. Using default configuration.`);
-    return {
-      ui: {
-        projectDirectoriesPrefix: null,
-      },
-      editors: [],
-      templates: [],
-    };
+    console.error(`⚠️ Error reading workspace configuration: ${error}. Falling back to bundled defaults.`);
+    try {
+      return YAML.parse(defaultConfigYaml) as WorkspaceConfiguration;
+    } catch {
+      return {
+        ui: { projectDirectoriesPrefix: null },
+        editors: [],
+        templates: [],
+      };
+    }
   }
 }
 
